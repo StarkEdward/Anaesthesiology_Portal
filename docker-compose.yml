@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  inventory-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: inventory-app
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Pass your Gemini API key from local environment to the container
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./data:/app/data

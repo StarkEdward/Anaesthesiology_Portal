@@ -1,0 +1,217 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: instruments
+// Fields:
+//   - name: string (required)
+//   - company: string (required)
+//   - price: number (required)
+//   - current_stock: number (required)
+//   - invoice_date: string
+//   - po_date: string
+//   - invoice_no: string
+//   - po_no: string
+//   - stock_book_page_no: string
+//   - is_active: bool
+//
+// Collection: transactions
+// Fields:
+//   - instrument_id: string (required)
+//   - instrument_name: string
+//   - quantity: number (required)
+//   - issue_date: string (required)
+//   - incharge_sister_name: string
+//   - incharge_sister_designation: string
+//   - professor_name: string
+//   - remark: string
+//   - status: string (Pending/Completed)
+//   - is_delivered_to_ot: bool
+//   - is_approved_by_professor: bool
+//   - hod_remark: string
+//   - ot_stock_book_no: string
+//   - ot_stock_book_page_no: string
+//   - acceptance_date: string
+//
+// Collection: doctors
+// Fields:
+//   - title: string (required)
+//   - first_name: string (required)
+//   - middle_name: string
+//   - last_name: string (required)
+//   - designation: string (required)
+//   - joining_date: string (required)
+//   - till_date: string
+//   - mobile_number: string
+//   - email: string
+//   - additional_info: string
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return isAuthenticated() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : 'pending';
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.email == "sagarit620@gmail.com" && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || getUserRole() == 'admin';
+    }
+
+    function isDoctor() {
+      return isAdmin() || getUserRole() == 'doctor';
+    }
+
+    function isNurse() {
+      return isAdmin() || getUserRole() == 'nurse';
+    }
+
+    function isClerk() {
+      return isAdmin() || getUserRole() == 'clerk';
+    }
+
+    function isValidString(val, min, max) {
+      return val is string && val.size() >= min && val.size() <= max;
+    }
+
+    function isValidNumber(val, min) {
+      return val is number && val >= min;
+    }
+
+    function isValidDate(val) {
+      return val is string && val.matches("^\\d{4}-\\d{2}-\\d{2}.*");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidInstrument(data) {
+      return data.keys().hasAll(['name', 'company', 'price', 'current_stock']) &&
+             isValidString(data.name, 1, 200) &&
+             isValidString(data.company, 1, 200) &&
+             isValidNumber(data.price, 0) &&
+             isValidNumber(data.current_stock, 0);
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['instrument_id', 'quantity', 'issue_date', 'status']) &&
+             isValidString(data.instrument_id, 1, 100) &&
+             isValidNumber(data.quantity, 1) &&
+             isValidDate(data.issue_date) &&
+             data.status in ['Pending', 'Completed'];
+    }
+
+    function isValidDoctor(data) {
+      return data.keys().hasAll(['title', 'first_name', 'last_name', 'designation', 'joining_date']) &&
+             isValidString(data.title, 1, 10) &&
+             isValidString(data.first_name, 1, 100) &&
+             data.first_name.matches('^[a-zA-Z\\s.-]+$') &&
+             isValidString(data.last_name, 1, 100) &&
+             data.last_name.matches('^[a-zA-Z\\s.-]+$') &&
+             (!('middle_name' in data) || data.middle_name == '' || data.middle_name.matches('^[a-zA-Z\\s.-]+$')) &&
+             (!('mobile_number' in data) || data.mobile_number == '' || data.mobile_number.matches('^\\d{10}$')) &&
+             (!('email' in data) || data.email == '' || data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')) &&
+             isValidString(data.designation, 1, 100) &&
+             isValidDate(data.joining_date);
+    }
+
+    function isValidPACRecord(data) {
+      let requiredFields = ['patient_name', 'age', 'uhid', 'diagnosis', 'procedure', 'fitness', 'sex', 'ward_bed', 'date_of_admission', 'surgery_date', 'surgeon'];
+      return data.keys().hasAll(requiredFields) &&
+             isValidString(data.patient_name, 2, 200) &&
+             data.age is number && data.age > 0 && data.age < 150 &&
+             isValidString(data.uhid, 1, 50) &&
+             isValidString(data.diagnosis, 1, 2000) &&
+             isValidString(data.procedure, 1, 2000) &&
+             data.fitness in ['Fit', 'Unfit', 'Conditional'] &&
+             data.sex in ['Male', 'Female', 'Other'] &&
+             (!('risk' in data) || data.risk in ['Low', 'Moderate', 'High', '']) &&
+             (!('elective_emergency' in data) || data.elective_emergency in ['Elective', 'Emergency', '']) &&
+             // Ensure numeric fields are numbers or empty strings
+             (!('pulse_rate' in data) || data.pulse_rate is number || data.pulse_rate == '') &&
+             (!('spo2' in data) || data.spo2 is number || data.spo2 == '') &&
+             (!('hb' in data) || data.hb is number || data.hb == '') &&
+             (!('platelets' in data) || data.platelets is number || data.platelets == '') &&
+             (!('creatinine' in data) || data.creatinine is number || data.creatinine == '') &&
+             (!('respiratory_rate' in data) || data.respiratory_rate is number || data.respiratory_rate == '') &&
+             (!('temperature' in data) || data.temperature is number || data.temperature == '') &&
+             (!('rbs' in data) || data.rbs is number || data.rbs == '') &&
+             (!('electrolytes_na' in data) || data.electrolytes_na is number || data.electrolytes_na == '') &&
+             (!('electrolytes_k' in data) || data.electrolytes_k is number || data.electrolytes_k == '') &&
+             (!('blood_pressure' in data) || data.blood_pressure == '' || data.blood_pressure.matches('^\\d{2,3}/\\d{2,3}$')) &&
+             // Ensure boolean fields are boolean
+             (!('consent_anesthesia' in data) || data.consent_anesthesia is bool) &&
+             (!('consent_high_risk' in data) || data.consent_high_risk is bool) &&
+             // Ensure array fields are arrays
+             (!('comorbidities' in data) || data.comorbidities is list) &&
+             (!('addiction' in data) || data.addiction is list);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /instruments/{instrumentId} {
+      allow read: if isAuthenticated();
+      allow write: if isNurse() || isClerk(); 
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow write: if isNurse() || isClerk();
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if isAuthenticated();
+      allow write: if isDoctor() || isClerk();
+    }
+
+    match /pac_records/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if (isDoctor() || isNurse()) && isValidPACRecord(request.resource.data);
+      allow update: if (isDoctor() || isNurse()) && isValidPACRecord(request.resource.data);
+      allow delete: if isAdmin(); // Controlled strictly by admin now
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (request.auth.uid == userId && !("role" in request.resource.data.diff(resource.data).affectedKeys()));
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /leave_applications/{leaveId} {
+      allow read: if isAuthenticated();
+      allow write: if isClerk() || isAdmin();
+    }
+
+    match /nmc_declarations/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isDoctor() || isClerk();
+    }
+
+    match /nmc_form_b/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isDoctor() || isClerk();
+    }
+
+    match /library/{bookId} {
+      allow read: if isAuthenticated();
+      allow write: if isClerk() || isDoctor() || isAdmin();
+    }
+  }
+}

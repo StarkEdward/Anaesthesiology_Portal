@@ -1,0 +1,6 @@
+{
+  "name": "GMC Attendance System",
+  "description": "An interactive attendance report generator designed in compliance with GMC formats. Features custom headers in Marathi and English, automated calculations, interactive attendance grid cells, and exact A4 landscape print-to-PDF export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
