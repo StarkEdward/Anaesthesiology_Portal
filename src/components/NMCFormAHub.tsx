@@ -16,7 +16,7 @@ interface FormBRecord {
   updatedAt: any;
 }
 
-export default function NMCFormBHub() {
+export default function NMCFormAHub() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [records, setRecords] = useState<FormBRecord[]>([]);
@@ -26,7 +26,7 @@ export default function NMCFormBHub() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'nmc_form_b'), orderBy('updatedAt', 'desc'));
+    const q = query(collection(db, 'nmc_form_a'), orderBy('updatedAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const recordsData: FormBRecord[] = [];
@@ -36,7 +36,7 @@ export default function NMCFormBHub() {
       setRecords(recordsData);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching form B records:", error);
+      console.error("Error fetching Form A records:", error);
       setLoading(false);
     });
 
@@ -46,7 +46,7 @@ export default function NMCFormBHub() {
   const handleDelete = async (id: string) => {
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'nmc_form_b', id));
+      await deleteDoc(doc(db, 'nmc_form_a', id));
       setDeleteConfirmId(null);
     } catch (error) {
       console.error("Error deleting record:", error);
@@ -65,15 +65,15 @@ export default function NMCFormBHub() {
     <div className="p-6 max-w-7xl mx-auto w-full">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">NMC Form B Records</h1>
-          <p className="text-gray-500 mt-1">Manage and fill out NMC Form B (Standard Inspection Format)</p>
+          <h1 className="text-2xl font-bold text-gray-900">NMC Form A Records</h1>
+          <p className="text-gray-500 mt-1">Manage and fill out NMC Form A (Standard Inspection Format)</p>
         </div>
         <button
-          onClick={() => navigate('/nmc-form-b/new')}
+          onClick={() => navigate('/nmc-form-a/new')}
           className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
           <Plus size={20} />
-          <span>Fill New Form B</span>
+          <span>Fill New Form A</span>
         </button>
       </div>
 
@@ -106,15 +106,15 @@ export default function NMCFormBHub() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">No records found</h3>
             <p className="text-gray-500 max-w-sm mx-auto mb-6">
-              {searchTerm ? "No records match your search criteria." : "You haven't filled out any NMC Form B yet."}
+              {searchTerm ? "No records match your search criteria." : "You haven't filled out any NMC Form A yet."}
             </p>
             {!searchTerm && (
               <button
-                onClick={() => navigate('/nmc-form-b/new')}
+                onClick={() => navigate('/nmc-form-a/new')}
                 className="inline-flex items-center space-x-2 text-blue-600 font-medium hover:text-blue-700 transition-colors"
               >
                 <Plus size={18} />
-                <span>Create your first Form B</span>
+                <span>Create your first Form A</span>
               </button>
             )}
           </div>
@@ -135,7 +135,7 @@ export default function NMCFormBHub() {
                   <tr 
                     key={record.id} 
                     className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                    onClick={() => navigate(`/nmc-form-b/${record.id}`)}
+                    onClick={() => navigate(`/nmc-form-a/${record.id}`)}
                   >
                     <td className="py-4 px-6 text-gray-900 font-medium">
                       {record.id.substring(0, 8)}
@@ -182,7 +182,7 @@ export default function NMCFormBHub() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">Delete Record</h3>
                   <p className="text-slate-500 mt-2 text-sm leading-relaxed">
-                    Are you sure you want to delete this NMC Form B? This action cannot be undone and the data will be permanently removed.
+                    Are you sure you want to delete this NMC Form A? This action cannot be undone and the data will be permanently removed.
                   </p>
                 </div>
               </div>

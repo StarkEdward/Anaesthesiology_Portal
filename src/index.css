@@ -6,14 +6,20 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 2.03cm 1.78cm 2.29cm 1.78cm;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
 @media screen {
   .a4-page {
-    width: 210mm;
-    min-height: 297mm;
     margin: 0 auto 2rem auto;
-    padding: 40px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    box-sizing: border-box;
   }
   
   .nmc-form {
@@ -24,10 +30,18 @@
 
 @media print {
   @page {
-    size: A4 landscape;
+    size: A4;
     margin: 0;
   }
   
+  .a4-page { 
+    margin: 0 !important;
+    border: none !important; 
+    box-shadow: none !important; 
+    page-break-after: always; 
+    break-after: page; 
+  }
+
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -61,59 +75,28 @@ body.is-generating-pdf div.h-10.border-b.border-black,
   border-bottom-color: transparent !important;
 }
 
-/* Custom global overrides for custom scrollbar */
-.hidescrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hidescrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.tight-table th, .tight-table td {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.05);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+.nmc-table {
+  border-collapse: collapse;
 }
 
-/* Fix for React Transliterate Dropdown in Dark Mode */
-.rt-container {
-  position: relative;
-  width: 100%;
+.nmc-table th, .nmc-table td {
+  border: 1px solid black;
+  padding: 4px 8px;
 }
 
-.rt-container ul {
-  background-color: #0f172a !important; /* slate-950 */
-  border-radius: 0.5rem !important;
-  border: 1px solid #1e293b !important; /* slate-800 */
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  overflow: hidden;
-  z-index: 9999 !important;
-  margin-top: 4px !important;
+.nmc-table th {
+  font-weight: bold;
+  text-align: left;
 }
 
-.rt-container ul li {
-  color: #94a3b8 !important; /* slate-400 */
-  padding: 8px 12px !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  border-bottom: 1px solid #1e293b !important;
+@layer utilities {
+  .text-justify {
+    text-align: justify;
+  }
 }
 
-.rt-container ul li:last-child {
-  border-bottom: none !important;
-}
-
-.rt-container ul li[style*="background"] {
-  background-color: #1e293b !important; /* slate-800 */
-  color: #34d399 !important; /* emerald-400 */
-}

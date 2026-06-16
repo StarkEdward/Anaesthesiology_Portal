@@ -15,6 +15,9 @@ import Doctors from './components/Doctors';
 import NMCDeclarationForm from './components/NMCDeclarationForm';
 import NMCDeclarationHub from './components/NMCDeclarationHub';
 
+import NMCFormA from './components/NMCFormA';
+import NMCFormAHub from './components/NMCFormAHub';
+
 import NMCFormB from './components/NMCFormB';
 import NMCFormBHub from './components/NMCFormBHub';
 import Inventory from './components/Inventory';
@@ -51,16 +54,18 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans print:block print:h-auto print:bg-white print:overflow-visible">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} isCollapsed={sidebarCollapsed} setIsCollapsed={setSidebarCollapsed} />
-      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
-        <TopHeader 
-          onMenuClick={() => { setSidebarOpen(true); setSidebarCollapsed(false); }} 
-          toggleDesktopSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          isSidebarCollapsed={sidebarCollapsed}
-        />
-        <main className="flex-1 overflow-auto overflow-x-hidden relative">
-          <div className="absolute inset-0">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden relative transition-all duration-300 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'} print:block print:overflow-visible print:pl-0`}>
+        <div className="print:hidden">
+          <TopHeader 
+            onMenuClick={() => { setSidebarOpen(true); setSidebarCollapsed(false); }} 
+            toggleDesktopSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+            isSidebarCollapsed={sidebarCollapsed}
+          />
+        </div>
+        <main className="flex-1 overflow-auto overflow-x-hidden relative print:block print:overflow-visible">
+          <div className="absolute inset-0 print:relative print:inset-auto">
              {children}
           </div>
         </main>
@@ -94,6 +99,10 @@ export default function App() {
               <Route path="/leave" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><LeaveApplication /></MainLayout></ProtectedRoute>} />
               <Route path="/official-leave" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><OfficialLeaveLetter /></MainLayout></ProtectedRoute>} />
               
+              <Route path="/nmc-form-a" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormAHub /></MainLayout></ProtectedRoute>} />
+              <Route path="/nmc-form-a/new" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormA /></MainLayout></ProtectedRoute>} />
+              <Route path="/nmc-form-a/:id" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormA /></MainLayout></ProtectedRoute>} />
+
               <Route path="/nmc-form-b" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormBHub /></MainLayout></ProtectedRoute>} />
               <Route path="/nmc-form-b/new" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormB /></MainLayout></ProtectedRoute>} />
               <Route path="/nmc-form-b/:id" element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'clerk']}><MainLayout><NMCFormB /></MainLayout></ProtectedRoute>} />
@@ -111,3 +120,5 @@ export default function App() {
     </LanguageProvider>
   );
 }
+
+

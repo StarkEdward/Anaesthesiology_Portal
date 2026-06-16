@@ -498,7 +498,8 @@ export default function Doctors() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Desktop Table View (Hidden on Mobile/Tablet) */}
+      <div className="hidden lg:block bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -638,6 +639,120 @@ export default function Doctors() {
         </div>
       </div>
 
+      {/* Mobile & Tablet Card List View (Always Visible Actions & Full Names) */}
+      <div className="lg:hidden space-y-6">
+        {(Object.entries(
+          filteredDoctors.reduce((acc, doc) => {
+            const role = doc.designation || 'Other';
+            if (!acc[role]) acc[role] = [];
+            acc[role].push(doc);
+            return acc;
+          }, {} as Record<string, typeof doctors>)
+        ) as [string, typeof doctors][])
+          .sort(([roleA], [roleB]) => {
+            const rankA = designationHierarchy[roleA] || 99;
+            const rankB = designationHierarchy[roleB] || 99;
+            return rankA - rankB;
+          })
+          .map(([role, roleDoctors]) => (
+            <div key={role} className="space-y-3">
+              {/* Role Header */}
+              <div className="flex items-center gap-4 py-2">
+                <span className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em]">{role}</span>
+                <div className="flex-1 h-[1px] bg-slate-200" />
+                <span className="text-[10px] font-mono font-bold text-slate-400">{roleDoctors.length} MEMBERS</span>
+              </div>
+
+              {/* Grid of Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {roleDoctors.map((doc) => {
+                  const docRank = designationHierarchy[doc.designation] || 99;
+                  const gradient = getRankColor(docRank);
+                  const expYears = parseInt(doc.teaching_exp_years || "0");
+                  const isNew = doc.joining_date && (new Date().getTime() - new Date(doc.joining_date).getTime() < 30 * 24 * 60 * 60 * 1000);
+
+                  return (
+                    <div
+                      key={doc.id}
+                      onClick={() => setViewDoctor(doc)}
+                      className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer relative flex flex-col justify-between gap-4"
+                    >
+                      {/* Top Row with Avatar, Name Info & Actions */}
+                      <div className="flex items-start gap-3">
+                        <div className={`w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br ${gradient} p-[1px]`}>
+                          <div className="w-full h-full bg-white rounded-[11px] flex items-center justify-center">
+                            <span className={`text-sm font-black bg-clip-text text-transparent bg-gradient-to-br ${gradient}`}>
+                              {doc.first_name.charAt(0)}{doc.last_name.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="text-base font-black text-slate-900 leading-snug break-words">
+                              {doc.title} {doc.first_name} {doc.middle_name ? doc.middle_name + ' ' : ''}{doc.last_name}
+                            </span>
+                            {isNew && <span className="px-1.5 py-0.5 bg-indigo-600 text-white text-[8px] font-black rounded-full leading-none">NEW</span>}
+                          </div>
+                          {doc.name_mr && <span className="text-xs font-bold text-slate-500 block mt-0.5">{doc.name_mr}</span>}
+                          <span className="text-[11px] font-bold text-indigo-600/90 bg-indigo-50 px-2 py-0.5 rounded-md inline-block mt-1.5">{doc.designation}</span>
+                        </div>
+
+                        {/* Always-Visible Actions for touch devices */}
+                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => openEdit(doc)}
+                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-indigo-600 rounded-xl transition-colors border border-slate-200/60 shadow-sm"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(doc.id.toString())}
+                            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-red-600 rounded-xl transition-colors border border-slate-200/60 shadow-sm"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Middle Grid with Details */}
+                      <div className="grid grid-cols-2 gap-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100 text-xs">
+                        <div>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Qualification</span>
+                          <span className="font-bold text-slate-700 block truncate">{doc.pg_qualification || doc.ug_qualification || '-'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Teaching Exp.</span>
+                          <span className="font-bold text-slate-700 block">{expYears} Years</span>
+                        </div>
+                      </div>
+
+                      {/* Contact Details Footer */}
+                      {(doc.mobile_number || doc.email) && (
+                        <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100/80">
+                          {doc.mobile_number && (
+                            <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+                              <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="font-mono">{doc.mobile_number}</span>
+                            </div>
+                          )}
+                          {doc.email && (
+                            <div className="flex items-center gap-2 text-xs text-slate-600 font-medium min-w-0">
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate block">{doc.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+      </div>
+
       {filteredDoctors.length === 0 && (
         <div className="py-20 text-center flex flex-col items-center">
           <div className="w-32 h-32 bg-white rounded-[2.5rem] shadow-sm flex justify-center items-center mb-6">
@@ -656,7 +771,7 @@ export default function Doctors() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 100 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden border border-white/20"
+              className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20"
             >
               {/* Dossier Header */}
               <div className="relative bg-slate-900 p-6 overflow-hidden shrink-0">
@@ -673,16 +788,16 @@ export default function Doctors() {
                   </div>
                   <div className="flex-1 min-w-0 space-y-2">
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-black text-white tracking-tight uppercase leading-tight truncate">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1 mb-1">
+                        <h3 className="text-xl font-black text-white tracking-tight uppercase leading-tight break-words">
                           {viewDoctor.title} {viewDoctor.first_name} {viewDoctor.middle_name} {viewDoctor.last_name}
                         </h3>
-                        <span className="shrink-0 px-2 py-0.5 bg-white/10 text-white/80 text-[9px] font-mono font-bold rounded-md border border-white/10 uppercase tracking-widest">
+                        <span className="self-start sm:self-auto shrink-0 px-2 py-0.5 bg-white/10 text-white/80 text-[9px] font-mono font-bold rounded-md border border-white/10 uppercase tracking-widest">
                           {viewDoctor.designation}
                         </span>
                       </div>
                       {(viewDoctor.name_mr || viewDoctor.designation_mr) && (
-                        <p className="text-xs text-indigo-200 font-bold truncate">
+                        <p className="text-xs text-indigo-200 font-bold break-words">
                           {viewDoctor.name_mr} {viewDoctor.name_mr && viewDoctor.designation_mr ? '•' : ''} {viewDoctor.designation_mr}
                         </p>
                       )}

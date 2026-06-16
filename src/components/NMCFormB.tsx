@@ -1007,7 +1007,7 @@ export default function NMCFormB() {
   );
 
   const PageFooter = () => (
-    <div className="absolute bottom-[12.7mm] left-[12.7mm] right-[12.7mm] flex justify-between text-[11pt] font-serif font-bold">
+    <div className="mt-auto pt-6 w-full flex justify-between text-[11pt] font-serif font-bold bg-white">
       <div>Signature of Dean</div>
       <div>Signature of Assessor</div>
     </div>
@@ -1122,23 +1122,23 @@ export default function NMCFormB() {
     <div className="h-full bg-slate-50 text-slate-900 flex flex-col font-sans">
       <main className="flex-1 flex flex-col relative overflow-hidden">
         
-        <div className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm p-3 md:p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 no-print">
-          <div className="flex-1 min-w-0">
+        <div className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
+          <div>
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => navigate('/nmc-form-b')}
-                className="p-1.5 md:p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors shrink-0"
+                className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
                 title="Back to Hub"
               >
                 <ArrowLeft size={20} />
               </button>
-              <h1 className="text-lg md:text-xl font-bold text-slate-800 truncate">
+              <h1 className="text-xl font-bold text-slate-800">
                 NMC FORM B - Anaesthesiology {id ? '(Editing)' : '(New)'}
               </h1>
             </div>
-              <p className="text-xs md:text-sm text-slate-500 ml-9 md:ml-11 truncate">
+              <p className="text-sm text-slate-500 ml-11">
                 {isAutosaving ? (
-                  <span className="flex items-center gap-1 text-blue-600"><Loader2 size={12} className="animate-spin" /> Saving...</span>
+                  <span className="flex items-center gap-1 text-blue-600"><Loader2 size={12} className="animate-spin" /> Saving to cloud...</span>
                 ) : lastSaved ? (
                   <span className="text-emerald-600">All changes saved to cloud at {lastSaved.toLocaleTimeString()}</span>
                 ) : (
@@ -1146,15 +1146,15 @@ export default function NMCFormB() {
                 )}
               </p>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 w-full md:w-auto hidescrollbar">
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={handleSaveRecord}
               disabled={isSaving}
-              className={`flex items-center justify-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-medium shadow-sm transition-colors whitespace-nowrap shrink-0 text-sm md:text-base ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors ${
                 isSaving ? 'bg-blue-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
-              {isSaving ? <Loader2 size={16} className="animate-spin md:w-[18px] md:h-[18px]" /> : <Save size={16} className="md:w-[18px] md:h-[18px]" />}
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
               <span>{isSaving ? 'Saving...' : 'Save Record'}</span>
             </button>
             <button onClick={() => {
@@ -1162,13 +1162,13 @@ export default function NMCFormB() {
                 localStorage.clear();
                 window.location.reload();
               }
-            }} className="flex items-center justify-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 shadow-sm transition-colors whitespace-nowrap shrink-0 text-sm md:text-base">
+            }} className="flex items-center gap-2 px-4 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 shadow-sm transition-colors">
               <Trash2 className="w-4 h-4" /><span>Reset Data</span>
             </button>
-            <button onClick={handlePrintClick} className="flex items-center justify-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 shadow-sm whitespace-nowrap shrink-0 text-sm md:text-base">
+            <button onClick={handlePrintClick} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 shadow-sm">
               <Printer className="w-4 h-4" /><span>Print</span>
             </button>
-            <button onClick={handleDownloadPDFClick} disabled={loading} className="flex items-center justify-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm disabled:opacity-50 whitespace-nowrap shrink-0 text-sm md:text-base">
+            <button onClick={handleDownloadPDFClick} disabled={loading} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm disabled:opacity-50">
               <Download className="w-4 h-4" /><span>{loading ? 'Generating...' : 'Download PDF'}</span>
             </button>
           </div>
@@ -2692,3 +2692,4 @@ export default function NMCFormB() {
     </div>
   );
 }
+

@@ -31,7 +31,7 @@ export default function TopHeader({ onMenuClick, toggleDesktopSidebar, isSidebar
   const initials = displayName.substring(0, 2).toUpperCase();
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 py-3 shadow-sm h-[65px]">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-4 md:px-8 py-3 shadow-sm h-[65px]">
       <div className="flex items-center">
         <button 
           onClick={onMenuClick}

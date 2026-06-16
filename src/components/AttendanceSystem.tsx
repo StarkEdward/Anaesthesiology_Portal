@@ -8,17 +8,20 @@ import { ReportTemplate } from './ReportTemplate';
 import { ControlPanel } from './ControlPanel';
 import { DoctorAttendanceWorkspace } from './DoctorAttendanceWorkspace';
 import { ResidentAttendanceWorkspace } from './ResidentAttendanceWorkspace';
+import { AttendanceHistoryPage } from './AttendanceHistoryPage';
 import { getDaysInMonth, getDayOfWeek, toMarathiDigits } from '../utils';
 import { 
-  Printer, Download, Eye, ZoomIn, ZoomOut, RotateCcw, 
+  Printer, Download, Eye, ZoomIn, ZoomOut, RotateCcw, Save, CheckCircle2, Loader2,
   HelpCircle, ChevronRight, ChevronLeft, SlidersHorizontal, Check, X, FileText, Globe, Info, Feather, Home, PanelLeftClose
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function AttendanceSystem() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [currentView, setCurrentView] = useState<'landing' | 'doctors' | 'residents' | 'clerks'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'doctors' | 'residents' | 'clerks' | 'history'>('landing');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [config, setConfig] = useState<ReportConfig>(fallbackReportConfig);
   const [employees, setEmployees] = useState<EmployeeAttendance[]>(fallbackEmployees);
@@ -27,6 +30,36 @@ export default function AttendanceSystem() {
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
   const [isDownloadGuideOpen, setIsDownloadGuideOpen] = useState<boolean>(false);
   const [activePen, setActivePen] = useState<'cycle' | AttendanceType>('cycle');
+
+  // ── Clerk Save to Firestore ───────────────────────────────────────────────
+  const [isSavingClerk, setIsSavingClerk] = useState(false);
+  const [saveClerkSuccess, setSaveClerkSuccess] = useState(false);
+
+  const handleSaveClerkReport = async () => {
+    setIsSavingClerk(true);
+    setSaveClerkSuccess(false);
+    try {
+      const now = new Date();
+      const monthKey = `${config.year}-${String(config.month).padStart(2, '0')}`;
+      await setDoc(doc(db, 'attendance_reports', 'clerks', 'months', monthKey), {
+        config,
+        employees,
+        savedAt: Timestamp.now(),
+        type: 'clerks',
+        monthKey,
+      });
+      setSaveClerkSuccess(true);
+      showToast('Clerk attendance report saved successfully!', 'success');
+      setTimeout(() => setSaveClerkSuccess(false), 3000);
+    } catch (e: any) {
+      console.error('Clerk save failed', e);
+      const reason = e?.code ? `Firestore error: ${e.code} — ${e.message}` : e?.message || 'Unknown error.';
+      showToast(`Save failed: ${reason}`, 'error');
+    } finally {
+      setIsSavingClerk(false);
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Handle cell click using active pen mode or cycle-toggle mode
   const handleCellClick = (empId: string, day: number) => {
@@ -301,6 +334,20 @@ export default function AttendanceSystem() {
               Manage printing and generate precise A4 attendance grids for departmental staff.
             </p>
           </button>
+
+          {/* ── History Card (NEW) ── */}
+          <button 
+            onClick={() => setCurrentView('history')}
+            className="flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-900/80 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-600 hover:shadow-2xl hover:-translate-y-1 transition-all group"
+          >
+            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform group-hover:bg-slate-700">
+              <span className="text-xl">🕐</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-300 mb-2">History</h2>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 text-center leading-relaxed px-2">
+              View, reopen and reprint saved monthly attendance reports for Doctors and Residents.
+            </p>
+          </button>
         </div>
       </div>
     );
@@ -317,6 +364,25 @@ export default function AttendanceSystem() {
   if (currentView === 'residents') {
     return <ResidentAttendanceWorkspace onBack={() => setCurrentView('landing')} monthLabel={currentMonthLabel} marathiYear={currentMarathiYear} />;
   }
+
+  // ── History view (NEW) ───────────────────────────────────────────────────
+  if (currentView === 'history') {
+    return (
+      <AttendanceHistoryPage
+        onBack={() => setCurrentView('landing')}
+        onOpenReport={(report: any) => {
+          if (report.type === 'clerks') {
+            setConfig(report.config);
+            setEmployees(report.employees);
+            setCurrentView('clerks');
+          } else {
+            setCurrentView(report.type === 'doctors' ? 'doctors' : 'residents');
+          }
+        }}
+      />
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="absolute inset-0 flex overflow-hidden bg-slate-950 font-sans text-slate-100 print-reset">
@@ -481,6 +547,26 @@ export default function AttendanceSystem() {
               title="Need Help?"
             >
               <HelpCircle className="w-4 h-4 md:w-3.5 md:h-3.5 mx-auto" />
+            </button>
+
+            {/* ── SAVE CLERK REPORT BUTTON (NEW) ── */}
+            <button
+              onClick={handleSaveClerkReport}
+              disabled={isSavingClerk || saveClerkSuccess}
+              className={`px-2 md:px-3 py-1.5 font-bold rounded-lg text-xs flex items-center justify-center gap-2 border transition-all active:scale-95 shadow-sm ${
+                saveClerkSuccess
+                  ? 'bg-emerald-900/40 border-emerald-600/50 text-emerald-400'
+                  : 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200'
+              } disabled:opacity-70`}
+              title="Save this clerk report to Firestore"
+            >
+              {isSavingClerk ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span className="hidden md:inline">Saving...</span></>
+              ) : saveClerkSuccess ? (
+                <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /><span className="hidden md:inline">Saved!</span></>
+              ) : (
+                <><Save className="w-3.5 h-3.5 text-slate-400" /><span className="hidden md:inline">Save Report</span></>
+              )}
             </button>
 
             {/* DOWNLOAD PDF SEPARATELY BUTTON */}

@@ -213,5 +213,14 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isClerk() || isDoctor() || isAdmin();
     }
+
+    // ---------------------------------------------------------------
+    // Attendance Reports — saved monthly reports for Doctors, Residents & Clerks
+    // Path: attendance_reports/{type}/months/{monthKey}
+    match /attendance_reports/{type}/months/{monthKey} {
+      allow read: if isAuthenticated();
+      allow write: if isDoctor() || isAdmin() || isClerk();
+      allow delete: if isAdmin() || isDoctor() || isClerk();
+    }
   }
 }

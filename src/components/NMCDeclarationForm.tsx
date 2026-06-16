@@ -194,94 +194,14 @@ function NMCDeclarationFormInner() {
   };
 
   const executeDownloadPdf = async () => {
-    setIsGenerating(true);
-    document.body.classList.add("is-generating-pdf");
-    const inputsWithPlaceholders = Array.from(
-      document.querySelectorAll("input[placeholder], textarea[placeholder]"),
-    );
-    const placeholderValues = inputsWithPlaceholders.map(
-      (el) => el.getAttribute("placeholder") || "",
-    );
-    inputsWithPlaceholders.forEach((el) => el.setAttribute("placeholder", ""));
-
-    const dateInputs = Array.from(
-      document.querySelectorAll('input[type="date"]'),
-    ) as HTMLInputElement[];
-    const dateInputStates = dateInputs.map((el) => {
-      const originalValue = el.value;
-      let displayValue = originalValue;
-      if (originalValue) {
-        const [year, month, day] = originalValue.split("-");
-        if (year && month && day) displayValue = `${day}/${month}/${year}`;
-      }
-      el.type = "text";
-      el.value = displayValue;
-      el.setAttribute("value", displayValue);
-      return { el, originalValue };
+    setToastMessage({
+      type: "info",
+      text: "To save as a selectable PDF, please use the Print dialog and choose 'Save as PDF'.",
     });
-
-    try {
-      const pdf = new jsPDF({
-        orientation: "p",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-      const pages = document.querySelectorAll(".a4-page");
-
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement;
-        await new Promise((r) => setTimeout(r, 300));
-        const imgWidth = 210;
-        const pageHeightMm = (page.offsetHeight * 210) / page.offsetWidth;
-        const imgHeight = Math.max(297, pageHeightMm);
-        const dataUrl = await toJpeg(page, {
-          quality: 0.85,
-          pixelRatio: 1.5,
-          backgroundColor: "#ffffff",
-          width: page.offsetWidth,
-          height: page.offsetHeight,
-          style: {
-            transform: "scale(1)",
-            transformOrigin: "top left",
-            margin: "0",
-          },
-        });
-        if (i === 0) {
-          if (imgHeight > 297) {
-            pdf.deletePage(1);
-            pdf.addPage([imgWidth, imgHeight]);
-          }
-        } else {
-          pdf.addPage([imgWidth, imgHeight]);
-        }
-        pdf.addImage(dataUrl, "JPEG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
-      }
-      const cleanTitle = selectedTitle.replace(/\//g, "-").replace(/\s+/g, " ").trim();
-      let fileName = `${cleanTitle} Declaration Form.pdf`;
-      const firstNameInput = document.getElementById("faculty-first-name") as HTMLInputElement;
-      const lastNameInput = document.getElementById("faculty-last-name") as HTMLInputElement;
-      const firstName = firstNameInput?.value?.trim() || "";
-      const lastName = lastNameInput?.value?.trim() || "";
-      if (firstName || lastName) {
-        fileName = `${cleanTitle} Declaration Form Dr. ${firstName} ${lastName}.pdf`;
-      }
-      pdf.save(fileName.replace(/\s+/g, " "));
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      setToastMessage({ text: "Failed to generate PDF. Try using the regular Print option or wait a moment and try again.", type: "error" });
-    } finally {
-      dateInputStates.forEach(({ el, originalValue }) => {
-        el.type = "date";
-        el.value = originalValue;
-        el.setAttribute("value", originalValue);
-      });
-      inputsWithPlaceholders.forEach((el, index) => {
-        el.setAttribute("placeholder", placeholderValues[index]);
-      });
-      document.body.classList.remove("is-generating-pdf");
-      setIsGenerating(false);
-    }
+    setTimeout(() => {
+      setToastMessage(null);
+      executePrint();
+    }, 1500);
   };
 
   const handleSaveRecord = async () => {
@@ -598,8 +518,8 @@ function NMCDeclarationFormInner() {
         </form>
 
         {/* Floating actions */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex flex-col items-center gap-2 print:hidden z-50">
-          <div className="flex items-center gap-3 overflow-x-auto w-full max-w-full hidescrollbar pb-1 px-2 justify-start md:justify-center">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex flex-col items-center gap-2 print:hidden z-50">
+          <div className="flex justify-center flex-wrap gap-4">
             <input
               type="file"
               accept=".docx,.pdf"
@@ -610,24 +530,24 @@ function NMCDeclarationFormInner() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center justify-center space-x-2 px-4 md:px-6 py-2 md:py-2.5 bg-green-600 text-white rounded font-bold text-sm shadow hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
+              className="flex items-center space-x-2 px-6 py-2.5 bg-green-600 text-white rounded font-bold text-sm shadow hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isUploading ? <Loader2 size={16} className="animate-spin md:w-[18px] md:h-[18px]" /> : <Upload size={16} className="md:w-[18px] md:h-[18px]" />}
+              {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
               <span>{isUploading ? "Auto-filling..." : "Auto-fill (PDF / DOCX)"}</span>
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center justify-center space-x-2 px-4 md:px-6 py-2 md:py-2.5 bg-gray-600 text-white rounded font-bold text-sm shadow hover:bg-gray-700 transition whitespace-nowrap shrink-0"
+              className="flex items-center space-x-2 px-6 py-2.5 bg-gray-600 text-white rounded font-bold text-sm shadow hover:bg-gray-700 transition"
             >
-              <Printer size={16} className="md:w-[18px] md:h-[18px]" />
+              <Printer size={18} />
               <span>Print Document</span>
             </button>
             <button
               onClick={handleDownloadPdf}
               disabled={isGenerating}
-              className="flex items-center justify-center space-x-2 px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded font-bold text-sm shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0"
+              className="flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded font-bold text-sm shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download size={16} className="md:w-[18px] md:h-[18px]" />
+              <Download size={18} />
               <span>{isGenerating ? "Generating..." : "Download PDF"}</span>
             </button>
           </div>

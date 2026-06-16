@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Printer, Download, Eye, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ChevronLeft, Printer, Download, Eye, ZoomIn, ZoomOut, RotateCcw, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { ReactTransliterate } from 'react-transliterate';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ResidentAttendanceReportTemplate, ResidentAttendanceRecord } from './ResidentAttendanceReportTemplate';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { toMarathiDigits } from '../utils';
+import { useToast } from '../context/ToastContext';
 
 interface ResidentAttendanceWorkspaceProps {
   onBack: () => void;
@@ -15,6 +16,7 @@ interface ResidentAttendanceWorkspaceProps {
 }
 
 export const ResidentAttendanceWorkspace: React.FC<ResidentAttendanceWorkspaceProps> = ({ onBack, monthLabel, marathiYear }) => {
+  const { showToast } = useToast();
   const [records, setRecords] = useState<ResidentAttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState('१५/०५/२०२६');
@@ -36,6 +38,42 @@ export const ResidentAttendanceWorkspace: React.FC<ResidentAttendanceWorkspacePr
   const [activeTab, setActiveTab] = useState<'data' | 'doctors' | 'styles'>('data');
   const [zoom, setZoom] = useState(0.85);
 
+  // ── Save to Firestore ─────────────────────────────────────────────────────
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveReport = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      await setDoc(doc(db, 'attendance_reports', 'residents', 'months', monthKey), {
+        fromDate,
+        toDate,
+        reportDate,
+        refYear,
+        records,
+        savedAt: Timestamp.now(),
+        type: 'residents',
+      });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      showToast('Attendance report saved successfully!', 'success');
+    } catch (e: any) {
+      console.error('Save failed', e);
+      const reason = e?.code
+        ? `Firestore error: ${e.code} — ${e.message}`
+        : e?.message
+        ? e.message
+        : 'Unknown error occurred.';
+      showToast(`Save failed: ${reason}`, 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -45,7 +83,7 @@ export const ResidentAttendanceWorkspace: React.FC<ResidentAttendanceWorkspacePr
           return {
             ...data,
             id: doc.id,
-          };
+          } as any;
         });
 
         // Filter only residents
@@ -366,6 +404,25 @@ export const ResidentAttendanceWorkspace: React.FC<ResidentAttendanceWorkspacePr
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* ── Save Report Button (NEW) ── */}
+            <button
+              onClick={handleSaveReport}
+              disabled={isSaving || saveSuccess}
+              className={`px-3 py-1.5 font-bold rounded-lg text-xs flex items-center gap-2 border transition-all ${
+                saveSuccess
+                  ? 'bg-emerald-900/40 border-emerald-600/50 text-emerald-400'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+              } disabled:opacity-70`}
+              title="Save this report to Firestore"
+            >
+              {isSaving ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+              ) : saveSuccess ? (
+                <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Saved!</>
+              ) : (
+                <><Save className="w-3.5 h-3.5 text-slate-400" /> Save Report</>
+              )}
+            </button>
             <button onClick={handleDownloadPDF} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs flex items-center gap-2 border border-slate-700">
               <Download className="w-3.5 h-3.5 text-emerald-400" /> PDF
             </button>

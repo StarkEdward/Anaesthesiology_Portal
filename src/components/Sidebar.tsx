@@ -48,6 +48,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
         { icon: FileText, label: "Declaration Form", path: "/declaration", roles: ['admin', 'doctor', 'clerk'] },
         { icon: CalendarRange, label: "Leave Application", path: "/leave", roles: ['admin', 'doctor', 'clerk'] },
         { icon: FileSignature, label: "Official Leave Letter", path: "/official-leave", roles: ['admin', 'doctor', 'clerk'] },
+        { icon: FileText, label: "NMC Form A", path: "/nmc-form-a", roles: ['admin', 'doctor', 'clerk'] },
         { icon: FileText, label: "NMC Form B (Anaesthesia)", path: "/nmc-form-b", roles: ['admin', 'doctor', 'clerk'] },
       ]
     },
@@ -163,3 +164,4 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed, setIsCollapsed
     </>
   );
 }
+
